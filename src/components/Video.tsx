@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { RefObject, useRef } from "react";
 import media from "../assets/video.mp4";
 
-const videoRef = useRef<HTMLVideoElement>(null);
+let videoRef: RefObject<HTMLVideoElement>;
 
 export const Video = ({ toggle }: { toggle: () => void }) => {
+  videoRef = useRef<HTMLVideoElement>(null);
   return (
     <video
       ref={videoRef}
