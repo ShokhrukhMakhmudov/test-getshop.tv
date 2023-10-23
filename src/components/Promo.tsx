@@ -6,6 +6,7 @@ import qr from "../assets/qr-code.png";
 const Promo = (props: {
   state: TState;
   setState: Dispatch<SetStateAction<TState>>;
+  setPos: Dispatch<SetStateAction<number[]>>;
   pos: number[];
   clearNum: () => void;
   putNum: (num: string) => void;
@@ -14,6 +15,7 @@ const Promo = (props: {
     state: { number, checkbox, errorNum, errorCheck, submit },
     setState,
     pos,
+    setPos,
     clearNum,
     putNum,
   } = props;
@@ -63,6 +65,7 @@ const Promo = (props: {
         setState((prev) => {
           return { ...prev, promo: false };
         });
+        setPos([0, 0]);
         videoPlay();
       }, 3000);
     }
@@ -83,7 +86,7 @@ const Promo = (props: {
       closeBtn?.current?.focus();
     } else {
       let el = numPanel.current?.children[num];
-      (el as HTMLElement).focus();
+      (el as HTMLElement)?.focus();
     }
   }, [pos]);
   return (
@@ -110,6 +113,27 @@ const Promo = (props: {
             <p className="panel-subtitle">
               и с Вами свяжется наш менеждер для дальнейшей консультации
             </p>
+
+            <div className="num-panel" ref={numPanel}>
+              {Array.from({ length: 10 }).map((_, ind) => {
+                return (
+                  <button
+                    key={ind}
+                    className="num-panel__item"
+                    onClick={() => {
+                      putNum(String(ind));
+                    }}>
+                    {ind}
+                  </button>
+                );
+              })}
+
+              <button
+                className="num-panel__item num-panel__backspace"
+                onClick={clearNum}>
+                Стереть
+              </button>
+            </div>
 
             {errorNum ? (
               <p className="error-msg">Неверно введён номер</p>
@@ -151,26 +175,6 @@ const Promo = (props: {
                 </p>
               </div>
             )}
-            <div className="num-panel" ref={numPanel}>
-              {Array.from({ length: 10 }).map((_, ind) => {
-                return (
-                  <button
-                    key={ind}
-                    className="num-panel__item"
-                    onClick={() => {
-                      putNum(String(ind));
-                    }}>
-                    {ind}
-                  </button>
-                );
-              })}
-
-              <button
-                className="num-panel__item num-panel__backspace"
-                onClick={clearNum}>
-                Стереть
-              </button>
-            </div>
             <button
               className="submit-btn"
               ref={submitBtn}
@@ -194,6 +198,7 @@ const Promo = (props: {
               checkbox: false,
             };
           });
+          setPos([0, 0]);
         }}>
         <svg
           width="24"

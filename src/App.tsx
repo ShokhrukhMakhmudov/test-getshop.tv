@@ -121,7 +121,9 @@ function App() {
         }
         break;
       case "ArrowRight":
-        if (pos[0] < 2) {
+        if (pos[0] === 1 && pos[1] === 3) {
+          setPos([0, 4]);
+        } else if (pos[0] < 2) {
           setPos((prev) => [prev[0] + 1, prev[1]]);
         } else if (pos[1] < 4) {
           setPos((prev) => [0, prev[1] + 1]);
@@ -150,6 +152,7 @@ function App() {
         setState((prev) => {
           return { ...prev, promo: false };
         });
+        setPos([0, 0]);
         videoPlay();
       }, 10000); // Установите время бездействия (в данном случае, 5 секунд)
     };
@@ -196,6 +199,7 @@ function App() {
           <Promo
             state={state}
             setState={setState}
+            setPos={setPos}
             pos={pos}
             clearNum={clearNum}
             putNum={putNum}
