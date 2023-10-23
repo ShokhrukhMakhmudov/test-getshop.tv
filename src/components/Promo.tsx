@@ -114,27 +114,6 @@ const Promo = (props: {
               и с Вами свяжется наш менеждер для дальнейшей консультации
             </p>
 
-            <div className="num-panel" ref={numPanel}>
-              {Array.from({ length: 10 }).map((_, ind) => {
-                return (
-                  <button
-                    key={ind}
-                    className="num-panel__item"
-                    onClick={() => {
-                      putNum(String(ind));
-                    }}>
-                    {ind}
-                  </button>
-                );
-              })}
-
-              <button
-                className="num-panel__item num-panel__backspace"
-                onClick={clearNum}>
-                Стереть
-              </button>
-            </div>
-
             {errorNum ? (
               <p className="error-msg">Неверно введён номер</p>
             ) : (
@@ -175,6 +154,26 @@ const Promo = (props: {
                 </p>
               </div>
             )}
+            <div className="num-panel" ref={numPanel}>
+              {Array.from({ length: 10 }).map((_, ind) => {
+                return (
+                  <button
+                    key={ind}
+                    className="num-panel__item"
+                    onClick={() => {
+                      putNum(String(ind));
+                    }}>
+                    {ind}
+                  </button>
+                );
+              })}
+
+              <button
+                className="num-panel__item num-panel__backspace"
+                onClick={clearNum}>
+                Стереть
+              </button>
+            </div>
             <button
               className="submit-btn"
               ref={submitBtn}
