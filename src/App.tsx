@@ -73,7 +73,9 @@ function App() {
     }
   }
 
-  const handleKeyDown = (e: SyntheticEvent | KeyboardEvent) => {
+  const handleKeyDown = (
+    e: SyntheticEvent & { key: string; which: number }
+  ) => {
     switch (e.key) {
       case "ArrowUp":
         if (pos[1] === 3) {

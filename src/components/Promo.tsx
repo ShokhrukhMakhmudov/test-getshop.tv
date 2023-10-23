@@ -83,7 +83,7 @@ const Promo = (props: {
       closeBtn?.current?.focus();
     } else {
       let el = numPanel.current?.children[num];
-      el?.focus();
+      (el as HTMLElement).focus();
     }
   }, [pos]);
   return (
