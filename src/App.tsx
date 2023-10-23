@@ -1,220 +1,203 @@
-import { useState, useRef, useEffect, MouseEvent } from "react";
-import media from "./assets/video.mp4";
+import { useState, useEffect, SyntheticEvent } from "react";
 import qr from "./assets/qr-code.png";
+import Promo from "./components/Promo";
+import { TState } from "./types";
+import { Video, videoPause, videoPlay } from "./components/Video";
 
 function App() {
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [isBanner, setIsBanner] = useState<boolean>(false);
-  const [promo, setPromo] = useState<boolean>(false);
-  const [number, setNumber] = useState<string>("12");
-  const [error, setError] = useState<boolean>(false);
-  const [checkbox, setCheckbox] = useState<boolean>(false);
-  const [submit, setSubmit] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [state, setState] = useState<TState>({
+    isPlaying: false,
+    isBanner: false,
+    promo: false,
+    number: "",
+    errorNum: false,
+    errorCheck: false,
+    checkbox: false,
+    submit: false,
+  });
+  const [pos, setPos] = useState<number[]>([0, 0]);
+  const { isBanner, promo, isPlaying, number } = state;
 
   function videoToggle() {
     isPlaying ? videoPause() : videoPlay();
-    setIsPlaying((prev) => !prev);
-  }
-
-  function videoPlay() {
-    videoRef.current?.play();
-  }
-
-  function videoPause() {
-    videoRef.current?.pause();
+    setState((prev) => {
+      return { ...prev, isPlaying: !prev.isPlaying };
+    });
   }
 
   useEffect(() => {
     if (isPlaying) {
-      setIsBanner(true);
-      setNumber("");
+      setState((prev) => {
+        return { ...prev, isBanner: true, number: "" };
+      });
     }
   }, [isPlaying]);
 
-  function putNum(e: MouseEvent) {
-    if (number.length < 10) {
-      setNumber((prev) => prev + e.target.textContent);
+  function findIndexIn2DArray(targetValue: number) {
+    let arr = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+      [10, 0],
+      [11, 12],
+    ];
+    for (let i = 0; i < arr.length; i++) {
+      const innerArray = arr[i];
+      const index = innerArray.indexOf(targetValue);
+      if (index !== -1) {
+        return [index, i]; // Возвращаем индексы внешнего и внутреннего массивов
+      }
     }
+    return [0, 0]; // Возвращаем [-1, -1], если элемент не найден
   }
+
+  function putNum(num: string) {
+    setState((prev) => {
+      if (prev.number.length < 10) {
+        return { ...prev, number: prev.number + num };
+      } else {
+        return prev;
+      }
+    });
+    setPos(findIndexIn2DArray(Number(num)));
+  }
+
   function clearNum() {
     if (number.length > 0) {
-      setNumber((prev) => prev.slice(0, prev.length - 1));
+      setState((prev) => {
+        return {
+          ...prev,
+          number: prev.number.slice(0, prev.number.length - 1),
+        };
+      });
     }
   }
-  function handleSubmit() {
-    if (number.length !== 10) {
-      // alert("Введен неверный номер");
-      setError(true);
-      setTimeout(() => {
-        setError(false);
-      }, 3000);
-    } else if (!checkbox) {
-      setError(true);
-      setTimeout(() => {
-        setError(false);
-      }, 3000);
-    } else {
-      setSubmit(true);
+
+  const handleKeyDown = (e: SyntheticEvent | KeyboardEvent) => {
+    switch (e.key) {
+      case "ArrowUp":
+        if (pos[1] === 3) {
+          if (pos[0] === 0) {
+            setPos([1, 2]);
+          } else {
+            setPos([2, 2]);
+          }
+        } else if (pos[1] === 4) {
+          if (pos[0] === 1) {
+            setPos([0, 4]);
+          } else {
+            setPos([0, 3]);
+          }
+        } else if (pos[1] !== 0) {
+          setPos((prev) => [prev[0], prev[1] - 1]);
+        }
+        break;
+      case "ArrowDown":
+        if (pos[1] === 3) {
+          setPos([0, 4]);
+        } else if (pos[1] === 4) {
+          setPos([1, 4]);
+        } else if (pos[1] !== 2) {
+          setPos((prev) => [prev[0], prev[1] + 1]);
+        } else if (pos[1] === 2) {
+          if (pos[0] === 2) {
+            setPos([1, 3]);
+          } else {
+            setPos([0, 3]);
+          }
+        }
+        break;
+      case "ArrowLeft":
+        if (pos[0] > 0) {
+          setPos((prev) => [prev[0] - 1, prev[1]]);
+        } else if (pos[1] > 0) {
+          if (pos[1] === 4) {
+            setPos([1, 3]);
+          } else {
+            setPos((prev) => [2, prev[1] - 1]);
+          }
+        }
+        break;
+      case "ArrowRight":
+        if (pos[0] < 2) {
+          setPos((prev) => [prev[0] + 1, prev[1]]);
+        } else if (pos[1] < 4) {
+          setPos((prev) => [0, prev[1] + 1]);
+        }
+        break;
+      case "Backspace":
+        clearNum();
+        break;
+      case "Escape":
+        // Очистить калькулятор
+        break;
+      default:
+        if ((e.which > 95 && e.which < 106) || (e.which > 47 && e.which < 58)) {
+          putNum(e.key);
+        }
+        break;
     }
-  }
+  };
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const resetTimer = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setState((prev) => {
+          return { ...prev, promo: false };
+        });
+        videoPlay();
+      }, 10000); // Установите время бездействия (в данном случае, 5 секунд)
+    };
+
+    resetTimer(); // Сразу запустите таймер
+
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+
+    return () => {
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      clearTimeout(timeout);
+    };
+  }, []);
   return (
-    <div className="section">
+    <div className="section" onKeyDown={(e) => handleKeyDown(e)}>
       <div className="wrapper">
-        <video
-          ref={videoRef}
-          className="video"
-          onClick={() => videoToggle()}
-          loop={true}
-          autoPlay={true}>
-          <source src={media} type="video/mp4" />
-        </video>
+        <Video toggle={videoToggle} />
         {/* banner */}
         <div className={`banner ${isBanner ? "" : "banner-close"}`}>
           <h3>Lorem ipsum dolor sit amet.</h3>
           <img src={qr} alt="qr" width={126} height={126} />
-          <p>Сканируйте QR-код или нажмите ОК</p>
+          <p>Сканируйте QR-код или нажмите OK</p>
 
           <button
             className="banner-btn"
             onClick={() => {
               videoPause();
-              setIsPlaying(false);
-              setIsBanner(false);
-              setPromo(true);
+              setState((prev) => {
+                return {
+                  ...prev,
+                  promo: true,
+                  isPlaying: false,
+                  isBanner: false,
+                };
+              });
             }}>
-            ОК
+            OK
           </button>
         </div>
         {/* Promo zone */}
         {promo && (
-          <div className="promo">
-            <div className="panel">
-              {submit ? (
-                <>
-                  <h2 className={`panel-result `}>ЗАЯВКА ПРИНЯТА</h2>
-                  <p className="panel-subtitle">
-                    Держите телефон под рукой. Скоро c Вами свяжется наш
-                    менеджер.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="panel-title">
-                    Введите ваш номер мобильного телефона
-                  </p>
-                  <h2
-                    className={`panel-result ${
-                      error ? "error" : ""
-                    }`}>{`+7(${number?.slice(0, 3).padEnd(3, "_")})${number
-                    ?.slice(3, 6)
-                    .padEnd(3, "_")}-${number
-                    ?.slice(6, 8)
-                    .padEnd(2, "_")}-${number?.slice(8).padEnd(2, "_")}`}</h2>
-                  <p className="panel-subtitle">
-                    и с Вами свяжется наш менеждер для дальнейшей консультации
-                  </p>
-                  <div className="num-panel">
-                    <button className="num-panel__item" onClick={putNum}>
-                      1
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      2
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      3
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      4
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      5
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      6
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      7
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      8
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      9
-                    </button>
-                    <button
-                      className="num-panel__item num-panel__backspace"
-                      onClick={clearNum}>
-                      Стереть
-                    </button>
-                    <button className="num-panel__item" onClick={putNum}>
-                      0
-                    </button>
-                  </div>
-                  {error ? (
-                    <p className="error-msg">Неверно введён номер</p>
-                  ) : (
-                    <div className="checkbox-panel">
-                      <label htmlFor="checkbox" className="checbox-label">
-                        {checkbox ? (
-                          <svg
-                            width="24"
-                            height="20"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                              stroke="#000"
-                              stroke-width="3"
-                              d="M1.061 11.566l7 7M6.295 18.566L22.922 1.939"
-                            />
-                          </svg>
-                        ) : (
-                          ""
-                        )}
-                      </label>
-                      <input
-                        className="checkbox"
-                        type="checkbox"
-                        checked={checkbox}
-                        id="checkbox"
-                        onChange={() => setCheckbox((prev) => !prev)}
-                        required
-                      />
-                      <p>Согласие на обработку персональных данных</p>
-                    </div>
-                  )}
-
-                  <button className="submit-btn" onClick={handleSubmit}>
-                    Подтвердить номер
-                  </button>
-                </>
-              )}
-            </div>
-            <button
-              className="promo-close"
-              onClick={() => {
-                setPromo(false);
-                videoPlay();
-                setIsPlaying(true);
-                setSubmit(false);
-              }}>
-              <svg
-                width="24"
-                height="24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                  stroke="currentColor"
-                  stroke-width="3"
-                  d="M2.345 1.941l20.281 20.281M1.658 22.222L21.939 1.941"
-                />
-              </svg>
-            </button>
-            <div className="promo-qr">
-              <p>Сканируйте QR-код ДЛЯ ПОЛУЧЕНИЯ ДОПОЛНИТЕЛЬНОЙ ИНФОРМАЦИИ</p>
-              <img src={qr} alt="qr" width={110} height={110} />
-            </div>
-          </div>
+          <Promo
+            state={state}
+            setState={setState}
+            pos={pos}
+            clearNum={clearNum}
+            putNum={putNum}
+          />
         )}
       </div>
     </div>
